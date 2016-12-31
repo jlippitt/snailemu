@@ -63,6 +63,7 @@ impl BackgroundMode {
             2 => mode_2,
             4 => mode_4,
             5 => mode_5,
+            6 => mode_6,
             _ => panic!("Mode {} not yet supported", mode)
         });
 
@@ -184,6 +185,26 @@ fn mode_1_low_priority(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer
     None
 }
 
+fn mode_2(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer) -> Option<Pixel> {
+    let object_pixel = ppu.object_layer().color_at(ppu, screen_x, screen_y, screen_layer);
+    try_pixel!(object_pixel, 3);
+    let bg1_pixel = ppu.bg1().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
+        color_mode: ColorMode::Color16,
+        ..Default::default()
+    });
+    try_pixel!(object_pixel, 2);
+    let bg2_pixel = ppu.bg2().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
+        color_mode: ColorMode::Color16,
+        ..Default::default()
+    });
+    try_pixel!(bg2_pixel, 1);
+    try_pixel!(object_pixel, 1);
+    try_pixel!(bg1_pixel);
+    try_pixel!(object_pixel);
+    try_pixel!(bg2_pixel);
+    None
+}
+
 fn mode_4(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer) -> Option<Pixel> {
     let object_pixel = ppu.object_layer().color_at(ppu, screen_x, screen_y, screen_layer);
     try_pixel!(object_pixel, 3);
@@ -195,26 +216,6 @@ fn mode_4(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer
     try_pixel!(object_pixel, 2);
     let bg2_pixel = ppu.bg2().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
         color_mode: ColorMode::Color4,
-        ..Default::default()
-    });
-    try_pixel!(bg2_pixel, 1);
-    try_pixel!(object_pixel, 1);
-    try_pixel!(bg1_pixel);
-    try_pixel!(object_pixel);
-    try_pixel!(bg2_pixel);
-    None
-}
-
-fn mode_2(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer) -> Option<Pixel> {
-    let object_pixel = ppu.object_layer().color_at(ppu, screen_x, screen_y, screen_layer);
-    try_pixel!(object_pixel, 3);
-    let bg1_pixel = ppu.bg1().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
-        color_mode: ColorMode::Color16,
-        ..Default::default()
-    });
-    try_pixel!(object_pixel, 2);
-    let bg2_pixel = ppu.bg2().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
-        color_mode: ColorMode::Color16,
         ..Default::default()
     });
     try_pixel!(bg2_pixel, 1);
@@ -244,5 +245,20 @@ fn mode_5(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer
     try_pixel!(bg1_pixel);
     try_pixel!(object_pixel);
     try_pixel!(bg2_pixel);
+    None
+}
+
+fn mode_6(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer) -> Option<Pixel> {
+    let object_pixel = ppu.object_layer().color_at(ppu, screen_x, screen_y, screen_layer);
+    try_pixel!(object_pixel, 3);
+    let bg1_pixel = ppu.bg1().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
+        color_mode: ColorMode::Color16,
+        always_wide: true,
+        ..Default::default()
+    });
+    try_pixel!(object_pixel, 2);
+    try_pixel!(object_pixel, 1);
+    try_pixel!(bg1_pixel);
+    try_pixel!(object_pixel);
     None
 }
