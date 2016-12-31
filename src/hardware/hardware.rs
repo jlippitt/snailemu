@@ -213,7 +213,7 @@ impl Hardware {
                 },
                 0x6000 => {
                     // SRAM (but only in HiROM mode)
-                    if self.rom.mode() == RomMode::HiRom && bank & 0x30 == 0x30 {
+                    if self.rom.mode() == RomMode::HiRom && bank & 0x20 == 0x20 {
                         (self.rom.sram(), sram21(address), SLOW_CYCLES)
                     } else {
                         (&mut self.open_bus, 0, SLOW_CYCLES)
