@@ -162,15 +162,15 @@ impl Vram {
     }
 
     pub fn chr_4(&self, index: usize) -> &Character {
-        &self.chr_4_map[index]
+        &self.chr_4_map[index % CHR_4_COUNT]
     }
 
     pub fn chr_16(&self, index: usize) -> &Character {
-        &self.chr_16_map[index]
+        &self.chr_16_map[index % CHR_16_COUNT]
     }
 
     pub fn chr_256(&self, index: usize) -> &Character {
-        &self.chr_256_map[index]
+        &self.chr_256_map[index % CHR_256_COUNT]
     }
 
     fn mapped_address(&self) -> usize {
