@@ -1,6 +1,6 @@
-use super::background_mode::Priority;
+use super::background_mode::{Priority, ScreenLayer};
 use super::oam::SizeSelector;
-use super::ppu::{Ppu, ScreenLayer};
+use super::ppu::Ppu;
 use util::color::Color;
 
 const TABLE_SIZE: usize = 256;

@@ -55,12 +55,6 @@ pub struct Ppu {
     next_pixel_cycles: u64
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub enum ScreenLayer {
-    MainScreen,
-    SubScreen
-}
-
 pub struct Position {
     h: usize,
     v: usize
@@ -160,6 +154,14 @@ impl Ppu {
         &self.object_layer
     }
 
+    pub fn color_math(&self) -> &ColorMath {
+        &self.color_math
+    }
+
+    pub fn backdrop_color_math_enabled(&self) -> bool {
+        self.backdrop_color_math_enabled
+    }
+
     pub fn add_cycles(&mut self, cycles: u64) {
         self.cycles += cycles;
     }
@@ -179,26 +181,17 @@ impl Ppu {
         if self.position.v >= DISPLAY_TOP && self.position.v < vblank_start &&
             self.position.h >= DISPLAY_LEFT && self.position.h < DISPLAY_RIGHT
         {
-            let color = if !self.force_blank {
+            let (even_color, odd_color) = if !self.force_blank {
                 let screen_x = self.position.h - DISPLAY_LEFT;
                 let screen_y = self.position.v - DISPLAY_TOP;
-
-                let maybe_color = self.background_mode.color_at(self, screen_x, screen_y, ScreenLayer::MainScreen);
-
-                let (color, color_math_enabled) = maybe_color.unwrap_or((self.cgram.color(0), self.backdrop_color_math_enabled));
-
-                if color_math_enabled {
-                    self.color_math.apply(self, color, screen_x, screen_y)
-                } else {
-                    color
-                }
+                self.background_mode.color_at(self, screen_x, screen_y)
             } else {
-                Color::default()
+                (Color::default(), Color::default())
             };
 
             // Blit two pixels because we are always in 'pseudo-HD'
-            self.screen.blit(color);
-            self.screen.blit(color);
+            self.screen.blit(even_color);
+            self.screen.blit(odd_color);
         }
 
         self.position.h += 1;

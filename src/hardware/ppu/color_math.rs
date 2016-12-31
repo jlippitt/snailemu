@@ -1,9 +1,8 @@
-use super::ppu::{Ppu, ScreenLayer};
 use util::color::Color;
 
 pub struct ColorMath {
     source: ColorMathSource,
-    operation: ColorMathOperation,
+    operation: ColorMathOperator,
     divisor: u8,
     fixed_color: Color
 }
@@ -13,7 +12,7 @@ enum ColorMathSource {
     SubScreen
 }
 
-enum ColorMathOperation {
+enum ColorMathOperator {
     Add,
     Subtract
 }
@@ -23,7 +22,7 @@ impl ColorMath {
         // TODO: Window settings
         ColorMath {
             source: ColorMathSource::FixedColor,
-            operation: ColorMathOperation::Add,
+            operation: ColorMathOperator::Add,
             divisor: 1,
             fixed_color: Color::default()
         }
@@ -39,8 +38,8 @@ impl ColorMath {
 
     pub fn set_operation(&mut self, value: u8) {
         self.operation = match value & 0x80 {
-            0x80 => ColorMathOperation::Subtract,
-            _ => ColorMathOperation::Add
+            0x80 => ColorMathOperator::Subtract,
+            _ => ColorMathOperator::Add
         };
 
         self.divisor = match value & 0x40 {
@@ -63,12 +62,22 @@ impl ColorMath {
         }
     }
 
-    pub fn apply(&self, ppu: &Ppu, lhs: Color, screen_x: usize, screen_y: usize) -> Color {
+    pub fn clip(&self, enabled: bool, screen_x: usize, screen_y: usize) -> bool {
         // TODO: Window clipping
+        !enabled
+    }
+
+    pub fn apply<F>(&self, lhs: Color, clip: bool, sub_screen_fn: F) -> Color
+        where F: Fn() -> Option<(Color, bool)>
+    {
+        if clip {
+            return lhs;
+        }
+
         let (rhs, divisor) = match self.source {
             ColorMathSource::FixedColor => (self.fixed_color, self.divisor),
             ColorMathSource::SubScreen => {
-                let maybe_color = ppu.background_mode().color_at(ppu, screen_x, screen_y, ScreenLayer::SubScreen);
+                let maybe_color = sub_screen_fn();
 
                 // Don't apply divisor if we fall back to fixed colour (for whatever reason)
                 match maybe_color {
@@ -79,8 +88,8 @@ impl ColorMath {
         };
 
         let operator = match self.operation {
-            ColorMathOperation::Add => u8::saturating_add,
-            ColorMathOperation::Subtract => u8::saturating_sub
+            ColorMathOperator::Add => u8::saturating_add,
+            ColorMathOperator::Subtract => u8::saturating_sub
         };
 
         Color::new(

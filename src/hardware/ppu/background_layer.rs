@@ -1,5 +1,5 @@
-use super::background_mode::Priority;
-use super::ppu::{Ppu, ScreenLayer};
+use super::background_mode::{Priority, ScreenLayer};
+use super::ppu::Ppu;
 use util::byte_access::WriteTwice;
 use util::color::Color;
 
