@@ -97,12 +97,14 @@ fn mode_0(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer
     try_pixel!(object_pixel, 3);
     let bg1_pixel = ppu.bg1().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
         color_mode: ColorMode::Color4,
-        palette_offset: 0
+        palette_offset: 0,
+        ..Default::default()
     });
     try_pixel!(bg1_pixel, 1);
     let bg2_pixel = ppu.bg2().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
         color_mode: ColorMode::Color4,
-        palette_offset: 32
+        palette_offset: 32,
+        ..Default::default()
     });
     try_pixel!(bg2_pixel, 1);
     try_pixel!(object_pixel, 2);
@@ -111,12 +113,14 @@ fn mode_0(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer
     try_pixel!(object_pixel, 1);
     let bg3_pixel = ppu.bg3().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
         color_mode: ColorMode::Color4,
-        palette_offset: 64
+        palette_offset: 64,
+        ..Default::default()
     });
     try_pixel!(bg3_pixel, 1);
     let bg4_pixel = ppu.bg4().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
         color_mode: ColorMode::Color4,
-        palette_offset: 96
+        palette_offset: 96,
+        ..Default::default()
     });
     try_pixel!(bg4_pixel, 1);
     try_pixel!(object_pixel);
@@ -205,11 +209,13 @@ fn mode_5(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer
     try_pixel!(object_pixel, 3);
     let bg1_pixel = ppu.bg1().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
         color_mode: ColorMode::Color16,
+        always_wide: true,
         ..Default::default()
     });
     try_pixel!(object_pixel, 2);
     let bg2_pixel = ppu.bg2().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
         color_mode: ColorMode::Color4,
+        always_wide: true,
         ..Default::default()
     });
     try_pixel!(bg2_pixel, 1);

@@ -1,6 +1,8 @@
 use super::background_mode::Priority;
 use util::byte_access::ByteAccess;
 
+pub const TILE_MAP_COUNT: usize = VRAM_BYTE_SIZE / TILE_MAP_SIZE;
+
 const VRAM_WORD_SIZE: usize = 32768;
 const VRAM_BYTE_SIZE: usize = VRAM_WORD_SIZE * 2;
 
@@ -9,7 +11,6 @@ const TILE_MAP_ROW_COUNT: usize = 32;
 
 const TILE_MAP_SIZE: usize = 2048;
 const TILE_MAP_ROW_SIZE: usize = TILE_MAP_ROW_WIDTH * 2;
-const TILE_MAP_COUNT: usize = VRAM_BYTE_SIZE / TILE_MAP_SIZE;
 
 const CHR_ROW_WIDTH: usize = 8;
 const CHR_ROW_COUNT: usize = 8;

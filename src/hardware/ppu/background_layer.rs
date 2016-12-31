@@ -1,5 +1,6 @@
 use super::background_mode::{Priority, ScreenLayer};
 use super::ppu::Ppu;
+use super::vram::TILE_MAP_COUNT;
 use util::byte_access::WriteTwice;
 use util::color::Color;
 
@@ -26,7 +27,8 @@ pub enum ColorMode {
 
 pub struct PixelOptions {
     pub color_mode: ColorMode,
-    pub palette_offset: usize
+    pub palette_offset: usize,
+    pub always_wide: bool
 }
 
 impl BackgroundLayer {
@@ -124,20 +126,35 @@ impl BackgroundLayer {
 
         let tile_map_offset = (tile_x / TILE_MAP_SIZE) + 2 * (tile_y / TILE_MAP_SIZE);
 
-        let tile_map_index = self.tile_map_locations[tile_map_offset];
+        let tile_map_index = self.tile_map_locations[tile_map_offset] % TILE_MAP_COUNT;
 
         let tile = ppu.vram().tile_map(tile_map_index).tile_at(tile_x % TILE_MAP_SIZE, tile_y % TILE_MAP_SIZE);
 
-        let (character, palette_size) = match pixel_options.color_mode {
-            ColorMode::Color4 => (ppu.vram().chr_4(self.chr_4_offset + tile.chr_index), 4),
-            ColorMode::Color16 => (ppu.vram().chr_16(self.chr_16_offset + tile.chr_index), 16),
-            ColorMode::Color256 => (ppu.vram().chr_256(self.chr_256_offset + tile.chr_index), 0)
+        let mut pixel_x = if tile.flip_x { 7 - (pos_x % 8) } else { pos_x % 8 };
+
+        // Deal with pseudo-hi-res modes
+        if pixel_options.always_wide {
+            pixel_x *= 2;
+            if screen_layer == ScreenLayer::MainScreen {
+                pixel_x += 1;
+            }
+        }
+
+        let pixel_y = if tile.flip_y { 7 - (pos_y % 8) } else { pos_y % 8 };
+
+        let chr_index = if pixel_x > 7 {
+            tile.chr_index + 1
+        } else {
+            tile.chr_index
         };
 
-        let pixel_x = if tile.flip_x { 7 - (pos_x % 8) } else { pos_x % 8 };
-        let pixel_y = if tile.flip_y { 7 - (pos_y % 8) } else { pos_y % 8 };
-            
-        let color_index = character.pixel_at(pixel_x, pixel_y);
+        let (character, palette_size) = match pixel_options.color_mode {
+            ColorMode::Color4 => (ppu.vram().chr_4(self.chr_4_offset + chr_index), 4),
+            ColorMode::Color16 => (ppu.vram().chr_16(self.chr_16_offset + chr_index), 16),
+            ColorMode::Color256 => (ppu.vram().chr_256(self.chr_256_offset + chr_index), 0)
+        };
+
+        let color_index = character.pixel_at(pixel_x % 8, pixel_y % 8);
 
         if color_index != 0 {
             let palette_offset = pixel_options.palette_offset + tile.palette_index * palette_size;
@@ -153,7 +170,8 @@ impl Default for PixelOptions {
     fn default() -> PixelOptions {
         PixelOptions {
             color_mode: ColorMode::Color256,
-            palette_offset: 0
+            palette_offset: 0,
+            always_wide: false
         }
     }
 }
