@@ -105,12 +105,19 @@ impl HardwareBus for DataBus {
 
 impl HardwareBus for SramBus {
     fn read(&mut self, offset: usize) -> u8 {
-        self.0[offset % self.0.len()]
+        let sram_len = self.0.len();
+        if sram_len > 0 {
+            self.0[offset % sram_len]
+        } else {
+            0
+        }
     }
 
     fn write(&mut self, offset: usize, value: u8) {
         let sram_len = self.0.len();
-        self.0[offset % sram_len] = value;
+        if sram_len > 0 {
+            self.0[offset % sram_len] = value;
+        }
     }
 }
 
