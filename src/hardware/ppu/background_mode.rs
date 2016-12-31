@@ -60,6 +60,7 @@ impl BackgroundMode {
         self.mode_fn = Box::new(match mode {
             0 => mode_0,
             1 => if value & 0x08 != 0 { mode_1_high_priority } else { mode_1_low_priority },
+            4 => mode_4,
             5 => mode_5,
             _ => panic!("Mode {} not yet supported", mode)
         });
@@ -175,6 +176,27 @@ fn mode_1_low_priority(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer
     try_pixel!(bg3_pixel, 1);
     try_pixel!(object_pixel);
     try_pixel!(bg3_pixel);
+    None
+}
+
+fn mode_4(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer) -> Option<Pixel> {
+    let object_pixel = ppu.object_layer().color_at(ppu, screen_x, screen_y, screen_layer);
+    try_pixel!(object_pixel, 3);
+    let bg1_pixel = ppu.bg1().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
+        color_mode: ColorMode::Color256,
+        ..Default::default()
+    });
+    try_pixel!(bg1_pixel, 1);
+    try_pixel!(object_pixel, 2);
+    let bg2_pixel = ppu.bg2().color_at(ppu, screen_x, screen_y, screen_layer, &PixelOptions {
+        color_mode: ColorMode::Color4,
+        ..Default::default()
+    });
+    try_pixel!(bg2_pixel, 1);
+    try_pixel!(object_pixel, 1);
+    try_pixel!(bg1_pixel);
+    try_pixel!(object_pixel);
+    try_pixel!(bg2_pixel);
     None
 }
 

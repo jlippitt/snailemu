@@ -131,7 +131,7 @@ impl BackgroundLayer {
         let (character, palette_size) = match pixel_options.color_mode {
             ColorMode::Color4 => (ppu.vram().chr_4(self.chr_4_offset + tile.chr_index), 4),
             ColorMode::Color16 => (ppu.vram().chr_16(self.chr_16_offset + tile.chr_index), 16),
-            ColorMode::Color256 => (ppu.vram().chr_256(self.chr_256_offset + tile.chr_index), 256)
+            ColorMode::Color256 => (ppu.vram().chr_256(self.chr_256_offset + tile.chr_index), 0)
         };
 
         let pixel_x = if tile.flip_x { 7 - (pos_x % 8) } else { pos_x % 8 };
