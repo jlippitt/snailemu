@@ -124,7 +124,9 @@ impl RomHeader {
         };
 
         // Check for valid reset vector
-        if header[0xFD] >= 0x80 {
+        let reset_vector = header[0xFD];
+
+        if reset_vector >= 0x80 && reset_vector != 0xFF {
             score += 1;
         } else {
             // Even if other bits are (coincidentally) correct, the ROM is still not valid
