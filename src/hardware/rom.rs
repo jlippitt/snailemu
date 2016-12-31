@@ -25,6 +25,7 @@ pub struct SramBus(Vec<u8>);
 struct RomHeader {
     mode: RomMode,
     score: u32,
+    title: Option<String>,
     rom_size: usize,
     sram_size: usize
 }
@@ -58,6 +59,12 @@ impl Rom {
 
         if header.score() > 0 {
             info!("{} mode detected", header.mode());
+
+            match header.title() {
+                Some(title) => info!("{}", title),
+                None => warn!("Title is not valid ASCII")
+            };
+
             info!("ROM size: {}", header.rom_size());
             info!("SRAM size: {}", header.sram_size());
 
@@ -152,7 +159,14 @@ impl RomHeader {
             score += 1;
         }
 
-        // Check the ROM size is correct
+        // Get the game title and check if it's valid ASCII (UTF-8 here...)
+        let title = String::from_utf8(header[0xC0..0xD5].to_vec()).ok();
+
+        if title.is_some() {
+            score += 1;
+        }
+
+        // Check if the ROM size is correctly reported
         let rom_size = match 0x400_usize.checked_shl(header[0xD7] as u32) {
             Some(rom_size) => {
                 if rom_size == rom_data.len() {
@@ -163,11 +177,13 @@ impl RomHeader {
             None => 0
         };
 
+        // Get the size of the internal cartridge RAM (SRAM)
         let sram_size = match header[0xD6] & 0x0F {
             0x01 | 0x02 => 0x400_usize.checked_shl(header[0xD8] as u32).unwrap_or(0),
             _ => 0
         };
 
+        // Revert score to 0 if the ROM is not bootable from this header
         if !valid {
             score = 0;
         }
@@ -178,7 +194,8 @@ impl RomHeader {
             mode: mode,
             score: score,
             rom_size: rom_size,
-            sram_size: sram_size
+            sram_size: sram_size,
+            title: title
         }
     }
 
@@ -188,6 +205,10 @@ impl RomHeader {
 
     fn score(&self) -> u32 {
         self.score
+    }
+
+    fn title(&self) -> Option<&String> {
+        self.title.as_ref()
     }
 
     fn rom_size(&self) -> usize {
