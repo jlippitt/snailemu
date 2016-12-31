@@ -176,7 +176,7 @@ impl Hardware {
                         RomMode::LoRom => {
                             if offset & 0x8000 != 0 {
                                 (self.rom.data(), rom20(address), SLOW_CYCLES)
-                            } else if (bank & 0xF0) == 0x70 {
+                            } else if (bank & 0x70) == 0x70 {
                                 (self.rom.sram(), sram20(address), SLOW_CYCLES)
                             } else {
                                 (&mut self.open_bus, 0, FAST_CYCLES)
