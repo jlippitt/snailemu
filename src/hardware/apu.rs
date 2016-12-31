@@ -29,7 +29,7 @@ impl HardwareBus for Apu {
         match offset {
             0x00 => {
                 if self.transfer_started {
-                    if value == 0 || value == (self.ports[0] + 1) || self.ports[1] != 0 {
+                    if value == 0 || value == (self.ports[0].wrapping_add(1)) || self.ports[1] != 0 {
                         debug!("SPC700 {:02X} = {:02X}", value, self.ports[1]);
                     } else {
                         debug!("SPC700 transfer finished");
