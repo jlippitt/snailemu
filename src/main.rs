@@ -14,6 +14,7 @@ mod util;
 use cpu::Cpu;
 use hardware::{Apu, Hardware, IoPort, Joypad, Ppu, Rom, Screen, Wram};
 use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
 use std::env;
 use std::path::Path;
 use std::rc::Rc;
@@ -39,6 +40,7 @@ fn main() {
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } => break 'outer,
+                Event::KeyDown { keycode: Some(Keycode::T), .. } => log::enable_trace_mode(),
                 _ => cpu.hardware_mut().joypad_mut().handle_event(event)
             }
         }
