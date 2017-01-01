@@ -92,12 +92,12 @@ impl MemoryMode for AbsoluteIndexedX {
 
 impl MemoryMode for AbsoluteIndexedXIndirect {
     fn resolve(cpu: &mut Cpu) -> (HardwareAddress, HardwareAddress) {
-        let bank = cpu.regs().data_bank;
-        let immediate = HardwareAddress::new(bank, cpu.read_next::<u16>());
+        let program_bank = cpu.regs().program_bank;
+        let immediate = HardwareAddress::new(program_bank, cpu.read_next::<u16>());
         let adjusted_offset = immediate.offset().wrapping_add(cpu.regs().index_x);
-        let adjusted = HardwareAddress::new(bank, adjusted_offset);
+        let adjusted = HardwareAddress::new(program_bank, adjusted_offset);
         let resolved_offset = cpu.hardware_mut().read::<u16>(adjusted);
-        let resolved = HardwareAddress::new(bank, resolved_offset);
+        let resolved = HardwareAddress::new(program_bank, resolved_offset);
         (resolved, immediate)
     }
 
@@ -121,10 +121,11 @@ impl MemoryMode for AbsoluteIndexedY {
 
 impl MemoryMode for AbsoluteIndirect {
     fn resolve(cpu: &mut Cpu) -> (HardwareAddress, HardwareAddress) {
-        let bank = cpu.regs().data_bank;
-        let immediate = HardwareAddress::new(bank, cpu.read_next::<u16>());
+        let program_bank = cpu.regs().program_bank;
+        // Address lookup is always in bank 0 (for whatever reason)
+        let immediate = HardwareAddress::new(0, cpu.read_next::<u16>());
         let resolved_offset = cpu.hardware_mut().read::<u16>(immediate);
-        let resolved = HardwareAddress::new(bank, resolved_offset);
+        let resolved = HardwareAddress::new(program_bank, resolved_offset);
         (resolved, immediate)
     }
 
@@ -135,8 +136,8 @@ impl MemoryMode for AbsoluteIndirect {
 
 impl MemoryMode for AbsoluteIndirectLong {
     fn resolve(cpu: &mut Cpu) -> (HardwareAddress, HardwareAddress) {
-        let bank = cpu.regs().data_bank;
-        let immediate = HardwareAddress::new(bank, cpu.read_next::<u16>());
+        let program_bank = cpu.regs().program_bank;
+        let immediate = HardwareAddress::new(program_bank, cpu.read_next::<u16>());
         let resolved = cpu.hardware_mut().read::<HardwareAddress>(immediate);
         (resolved, immediate)
     }
