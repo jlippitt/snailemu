@@ -81,7 +81,7 @@ impl MemoryMode for AbsoluteIndexedX {
     fn resolve(cpu: &mut Cpu) -> (HardwareAddress, HardwareAddress) {
         let bank = cpu.regs().data_bank;
         let immediate = HardwareAddress::new(bank, cpu.read_next::<u16>());
-        let resolved = HardwareAddress::new(bank, immediate.offset().wrapping_add(cpu.regs().index_x));
+        let resolved = immediate.wrapping_add(cpu.regs().index_x);
         (resolved, immediate)
     }
 
@@ -94,6 +94,7 @@ impl MemoryMode for AbsoluteIndexedXIndirect {
     fn resolve(cpu: &mut Cpu) -> (HardwareAddress, HardwareAddress) {
         let program_bank = cpu.regs().program_bank;
         let immediate = HardwareAddress::new(program_bank, cpu.read_next::<u16>());
+        // Wraps only within current bank
         let adjusted_offset = immediate.offset().wrapping_add(cpu.regs().index_x);
         let adjusted = HardwareAddress::new(program_bank, adjusted_offset);
         let resolved_offset = cpu.hardware_mut().read::<u16>(adjusted);
@@ -110,7 +111,7 @@ impl MemoryMode for AbsoluteIndexedY {
     fn resolve(cpu: &mut Cpu) -> (HardwareAddress, HardwareAddress) {
         let bank = cpu.regs().data_bank;
         let immediate = HardwareAddress::new(bank, cpu.read_next::<u16>());
-        let resolved = HardwareAddress::new(bank, immediate.offset().wrapping_add(cpu.regs().index_y));
+        let resolved = immediate.wrapping_add(cpu.regs().index_y);
         (resolved, immediate)
     }
 
@@ -161,8 +162,7 @@ impl MemoryMode for AbsoluteLong {
 impl MemoryMode for AbsoluteLongIndexedX {
     fn resolve(cpu: &mut Cpu) -> (HardwareAddress, HardwareAddress) {
         let immediate = cpu.read_next::<HardwareAddress>();
-        let adjusted_offset = immediate.offset().wrapping_add(cpu.regs().index_x);
-        let resolved = HardwareAddress::new(immediate.bank(), adjusted_offset);
+        let resolved = immediate.wrapping_add(cpu.regs().index_x);
         (resolved, immediate)
     }
 
@@ -188,6 +188,7 @@ impl MemoryMode for DirectPage {
 impl MemoryMode for DirectPageIndexedX {
     fn resolve(cpu: &mut Cpu) -> (HardwareAddress, HardwareAddress) {
         let immediate = HardwareAddress::new(0, cpu.read_next::<u8>() as u16);
+        // Wraps only within the current bank
         let adjusted_offset = immediate.offset()
             .wrapping_add(cpu.regs().direct_page)
             .wrapping_add(cpu.regs().index_x);
@@ -204,6 +205,7 @@ impl MemoryMode for DirectPageIndexedX {
 impl MemoryMode for DirectPageIndexedXIndirect {
     fn resolve(cpu: &mut Cpu) -> (HardwareAddress, HardwareAddress) {
         let immediate = HardwareAddress::new(0, cpu.read_next::<u8>() as u16);
+        // Wraps only within the current bank
         let adjusted_offset = immediate.offset()
             .wrapping_add(cpu.regs().direct_page)
             .wrapping_add(cpu.regs().index_x);
@@ -222,6 +224,7 @@ impl MemoryMode for DirectPageIndexedXIndirect {
 impl MemoryMode for DirectPageIndexedY {
     fn resolve(cpu: &mut Cpu) -> (HardwareAddress, HardwareAddress) {
         let immediate = HardwareAddress::new(0, cpu.read_next::<u8>() as u16);
+        // Wraps only within the current bank
         let adjusted_offset = immediate.offset()
             .wrapping_add(cpu.regs().direct_page)
             .wrapping_add(cpu.regs().index_y);
@@ -253,13 +256,13 @@ impl MemoryMode for DirectPageIndirect {
 
 impl MemoryMode for DirectPageIndirectIndexedY {
     fn resolve(cpu: &mut Cpu) -> (HardwareAddress, HardwareAddress) {
+        let data_bank = cpu.regs().data_bank;
         let immediate = HardwareAddress::new(0, cpu.read_next::<u8>() as u16);
         let adjusted_offset = immediate.offset().wrapping_add(cpu.regs().direct_page);
         cpu.direct_page_cycle();
         let indirect = HardwareAddress::new(0, adjusted_offset);
-        let resolved_offset = cpu.hardware_mut().read::<u16>(indirect);
-        let indexed_offset = resolved_offset.wrapping_add(cpu.regs().index_y);
-        let indexed = HardwareAddress::new(cpu.regs().data_bank, indexed_offset);
+        let resolved = HardwareAddress::new(data_bank, cpu.hardware_mut().read::<u16>(indirect));
+        let indexed = resolved.wrapping_add(cpu.regs().index_y);
         (indexed, immediate)
     }
 
@@ -290,8 +293,7 @@ impl MemoryMode for DirectPageIndirectLongIndexedY {
         cpu.direct_page_cycle();
         let indirect = HardwareAddress::new(0, adjusted_offset);
         let resolved = cpu.hardware_mut().read::<HardwareAddress>(indirect);
-        let indexed_offset = resolved.offset().wrapping_add(cpu.regs().index_y);
-        let indexed = HardwareAddress::new(resolved.bank(), indexed_offset);
+        let indexed = resolved.wrapping_add(cpu.regs().index_y);
         (indexed, immediate)
     }
 
@@ -330,13 +332,13 @@ impl MemoryMode for StackRelative {
 
 impl MemoryMode for StackRelativeIndirectIndexedY {
     fn resolve(cpu: &mut Cpu) -> (HardwareAddress, HardwareAddress) {
+        let data_bank = cpu.regs().data_bank;
         let immediate = HardwareAddress::new(0, cpu.read_next::<u8>() as u16);
         // TODO: Emulation mode stack location
         let adjusted_offset = cpu.regs().stack_pointer.wrapping_add(immediate.offset());
         let indirect = HardwareAddress::new(0, adjusted_offset);
-        let resolved_offset = cpu.hardware_mut().read::<u16>(indirect);
-        let indexed_offset = resolved_offset.wrapping_add(cpu.regs().index_y);
-        let indexed = HardwareAddress::new(cpu.regs().data_bank, indexed_offset);
+        let resolved = HardwareAddress::new(data_bank, cpu.hardware_mut().read::<u16>(indirect));
+        let indexed = resolved.wrapping_add(cpu.regs().index_y);
         (indexed, immediate)
     }
 

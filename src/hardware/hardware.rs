@@ -262,6 +262,15 @@ impl HardwareAddress {
     pub fn offset_mut(&mut self) -> &mut u16 {
         &mut self.offset
     }
+
+    pub fn wrapping_add(self, rhs: u16) -> Self {
+        let mut bank = self.bank;
+        let offset = self.offset.wrapping_add(rhs);
+        if offset < self.offset {
+            bank = bank.wrapping_add(1);
+        }
+        Self::new(bank, offset)
+    }
 }
 
 impl Display for HardwareAddress {
