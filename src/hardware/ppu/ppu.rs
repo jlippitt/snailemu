@@ -6,6 +6,7 @@ use super::background_layer::BackgroundLayer;
 use super::background_mode::BackgroundMode;
 use super::cgram::Cgram;
 use super::color_math::ColorMath;
+use super::mode_7::Mode7;
 use super::oam::Oam;
 use super::object_layer::ObjectLayer;
 use super::vram::Vram;
@@ -47,6 +48,7 @@ pub struct Ppu {
     bg2: BackgroundLayer,
     bg3: BackgroundLayer,
     bg4: BackgroundLayer,
+    mode_7: Mode7,
     object_layer: ObjectLayer,
     color_math: ColorMath,
     backdrop_color_math_enabled: bool,
@@ -96,6 +98,7 @@ impl Ppu {
             bg2: BackgroundLayer::new(),
             bg3: BackgroundLayer::new(),
             bg4: BackgroundLayer::new(),
+            mode_7: Mode7::new(),
             object_layer: ObjectLayer::new(),
             color_math: ColorMath::new(),
             backdrop_color_math_enabled: false,
@@ -148,6 +151,10 @@ impl Ppu {
 
     pub fn bg4(&self) -> &BackgroundLayer {
         &self.bg4
+    }
+
+    pub fn mode_7(&self) -> &Mode7 {
+        &self.mode_7
     }
 
     pub fn object_layer(&self) -> &ObjectLayer {

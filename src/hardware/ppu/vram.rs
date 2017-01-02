@@ -26,6 +26,16 @@ const CHR_16_COUNT: usize = VRAM_BYTE_SIZE / CHR_16_SIZE;
 const CHR_256_SIZE: usize = BIT_PLANE_SIZE * 4;
 const CHR_256_COUNT: usize = VRAM_BYTE_SIZE / CHR_256_SIZE;
 
+const MODE_7_TILE_MAP_ROW_WIDTH: usize = 128;
+const MODE_7_TILE_MAP_ROW_COUNT: usize = 128;
+
+const MODE_7_TILE_MAP_SIZE: usize = MODE_7_TILE_MAP_ROW_WIDTH * MODE_7_TILE_MAP_ROW_COUNT;
+const MODE_7_CHR_COUNT: usize = 256;
+
+const MODE_7_CHR_COL_SIZE: usize = 2;
+const MODE_7_CHR_ROW_SIZE: usize = MODE_7_CHR_COL_SIZE * 8;
+const MODE_7_CHR_SIZE: usize = MODE_7_CHR_ROW_SIZE * 8;
+
 pub struct Vram {
     raw_data: Vec<u16>,
     address: usize,
@@ -36,7 +46,9 @@ pub struct Vram {
     tile_maps: Vec<TileMap>,
     chr_4_map: Vec<Character>,
     chr_16_map: Vec<Character>,
-    chr_256_map: Vec<Character>
+    chr_256_map: Vec<Character>,
+    mode_7_tile_map: Vec<usize>,
+    mode_7_chr_map: Vec<Character>
 }
 
 #[derive(Copy, Clone, Default)]
@@ -85,6 +97,8 @@ impl Vram {
             chr_4_map: vec![Default::default(); CHR_4_COUNT],
             chr_16_map: vec![Default::default(); CHR_16_COUNT],
             chr_256_map: vec![Default::default(); CHR_256_COUNT],
+            mode_7_tile_map: vec![Default::default(); MODE_7_TILE_MAP_SIZE],
+            mode_7_chr_map: vec![Default::default(); MODE_7_CHR_COUNT]
         }
     }
     
@@ -173,6 +187,11 @@ impl Vram {
         &self.chr_256_map[index % CHR_256_COUNT]
     }
 
+    // TODO: Should this return an option?
+    pub fn mode_7_chr_at(&self, x: usize, y: usize) -> &Character {
+        &self.mode_7_chr_map[self.mode_7_tile_map[y * MODE_7_TILE_MAP_ROW_WIDTH + x]]
+    }
+
     fn mapped_address(&self) -> usize {
         let mapped_address = match self.remap_mode {
             RemapMode::NoRemap => self.address,
@@ -219,6 +238,24 @@ impl Vram {
         update_chr_cache(&mut self.chr_4_map, CHR_4_SIZE, byte_address, value);
         update_chr_cache(&mut self.chr_16_map, CHR_16_SIZE, byte_address, value);
         update_chr_cache(&mut self.chr_256_map, CHR_256_SIZE, byte_address, value);
+
+        if byte_address < (VRAM_BYTE_SIZE / 2) {
+            // Update Mode 7 maps
+            match byte_address % 2 {
+                0 => {
+                    // Tile map data is in lower byte of each word
+                    self.mode_7_tile_map[byte_address / 2] = value as usize;
+                },
+                1 => {
+                    // Character data is in upper byte of each word
+                    let chr_index = byte_address / MODE_7_CHR_SIZE;
+                    let row_index = (byte_address % MODE_7_CHR_SIZE) / MODE_7_CHR_ROW_SIZE;
+                    let column_index = (byte_address % MODE_7_CHR_ROW_SIZE) / MODE_7_CHR_COL_SIZE;
+                    self.mode_7_chr_map[chr_index].pixels[row_index][column_index] = value;
+                },
+                _ => unreachable!()
+            }
+        }
     }
 }
 

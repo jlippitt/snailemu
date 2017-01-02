@@ -65,6 +65,7 @@ impl BackgroundMode {
             4 => mode_4,
             5 => mode_5,
             6 => mode_6,
+            7 => mode_7,
             _ => panic!("Mode {} not yet supported", mode)
         });
 
@@ -279,6 +280,18 @@ fn mode_6(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer
     });
     try_pixel!(object_pixel, 2);
     try_pixel!(object_pixel, 1);
+    try_pixel!(bg1_pixel);
+    try_pixel!(object_pixel);
+    None
+}
+
+fn mode_7(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer) -> Option<Pixel> {
+    // TODO: Mode 7 EXTBG
+    let object_pixel = ppu.object_layer().color_at(ppu, screen_x, screen_y, screen_layer);
+    try_pixel!(object_pixel, 3);
+    try_pixel!(object_pixel, 2);
+    try_pixel!(object_pixel, 1);
+    let bg1_pixel = ppu.mode_7().color_at(ppu, screen_x, screen_y);
     try_pixel!(bg1_pixel);
     try_pixel!(object_pixel);
     None
