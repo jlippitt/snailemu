@@ -32,6 +32,7 @@ pub type MemoryAbsoluteLongIndexedX<T> = Memory<T, AbsoluteLongIndexedX>;
 pub type MemoryDirectPage<T> = Memory<T, DirectPage>;
 pub type MemoryDirectPageIndexedX<T> = Memory<T, DirectPageIndexedX>;
 pub type MemoryDirectPageIndexedXIndirect<T> = Memory<T, DirectPageIndexedXIndirect>;
+pub type MemoryDirectPageIndexedY<T> = Memory<T, DirectPageIndexedY>;
 pub type MemoryDirectPageIndirect<T> = Memory<T, DirectPageIndirect>;
 pub type MemoryDirectPageIndirectIndexedY<T> = Memory<T, DirectPageIndirectIndexedY>;
 pub type MemoryDirectPageIndirectLong<T> = Memory<T, DirectPageIndirectLong>;
