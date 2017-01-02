@@ -306,8 +306,14 @@ impl HardwareBus for Ppu {
                 self.bg3.set_chr_offset(value & 0x0F);
                 self.bg4.set_chr_offset((value & 0xF0) >> 4);
             },
-            0x0D => self.bg1.set_scroll_x(value),
-            0x0E => self.bg1.set_scroll_y(value),
+            0x0D => {
+                self.bg1.set_scroll_x(value);
+                self.mode_7.set_scroll_x(value);
+            },
+            0x0E => {
+                self.bg1.set_scroll_y(value);
+                self.mode_7.set_scroll_y(value);
+            },
             0x0F => self.bg2.set_scroll_x(value),
             0x10 => self.bg2.set_scroll_y(value),
             0x11 => self.bg3.set_scroll_x(value),

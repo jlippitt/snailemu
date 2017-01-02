@@ -1,26 +1,64 @@
 use super::background_mode::Priority;
 use super::ppu::Ppu;
+use util::byte_access::WriteTwice;
 use util::color::Color;
 
 const CHR_SIZE: usize = 8;
+const FIELD_SIZE: isize = (CHR_SIZE * 128) as isize;
 
-pub struct Mode7;
+pub struct Mode7 {
+    scroll_x_raw: WriteTwice<u16>,
+    scroll_y_raw: WriteTwice<u16>,
+    scroll_x: isize,
+    scroll_y: isize
+}
+
+#[inline]
+fn signed_scroll_value(raw_value: u16) -> isize {
+    // Convert raw value into scroll value using 13-bit signed format
+    (((raw_value << 3) as i16) as isize) / 8
+}
 
 impl Mode7 {
     pub fn new() -> Mode7 {
-        Mode7
+        Mode7 {
+            scroll_x_raw: WriteTwice::new(0x0000, 0x01FFF),
+            scroll_y_raw: WriteTwice::new(0x0000, 0x01FFF),
+            scroll_x: 0,
+            scroll_y: 0
+        }
+    }
+
+    pub fn set_scroll_x(&mut self, value: u8) {
+        self.scroll_x_raw.write(value);
+        self.scroll_x = signed_scroll_value(self.scroll_x_raw.value());
+    }
+
+    pub fn set_scroll_y(&mut self, value: u8) {
+        self.scroll_y_raw.write(value);
+        self.scroll_y = signed_scroll_value(self.scroll_y_raw.value());
     }
 
     pub fn color_at(&self, ppu: &Ppu, screen_x: usize, screen_y: usize)
         -> Option<(Color, Priority, bool)>
     {
-        // TODO: Scrolling, rotation, and all of that jazz
-        let tile_x = screen_x / CHR_SIZE;
-        let tile_y = screen_y / CHR_SIZE;
+        let signed_pos_x = (screen_x as isize) + self.scroll_x;
+        let signed_pos_y = (screen_y as isize) + self.scroll_y;
+
+        if signed_pos_x < 0 || signed_pos_y < 0 || signed_pos_x >= FIELD_SIZE || signed_pos_y >= FIELD_SIZE {
+            // TODO: *May* be character 0, depending on settings
+            return None;
+        }
+
+        let pos_x = signed_pos_x as usize;
+        let pos_y = signed_pos_y as usize;
+
+        let tile_x = pos_x / CHR_SIZE;
+        let tile_y = pos_y / CHR_SIZE;
 
         let character = ppu.vram().mode_7_chr_at(tile_x, tile_y);
 
-        let color_index = character.pixel_at(screen_x % CHR_SIZE, screen_y % CHR_SIZE);
+        let color_index = character.pixel_at(pos_x % CHR_SIZE, pos_y % CHR_SIZE);
 
         if color_index != 0 {
             Some((ppu.cgram().color(color_index as usize), 0, false))
