@@ -63,6 +63,7 @@ impl Joypad {
             self.button_state[3].bits()
         ]
     }
+
     pub fn handle_event(&mut self, event: Event) {
         match event {
             Event::KeyDown { keycode: Some(keycode), .. } => {
