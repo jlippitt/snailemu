@@ -81,8 +81,8 @@ impl Joypad {
 
         if button_index < 16 {
             let mask = 0x8000 >> button_index;
-            let data_line_1_bit = self.button_state[port_offset].bits() & mask != 0;
-            let data_line_2_bit = self.button_state[port_offset + 2].bits() & mask != 0;
+            let data_line_1_bit = (self.button_state[port_offset].bits() & mask) != 0;
+            let data_line_2_bit = (self.button_state[port_offset + 2].bits() & mask) != 0;
             self.button_indexes[port_offset] += 1;
             ((data_line_2_bit as u8) << 1) | (data_line_1_bit as u8)
         } else {
@@ -93,14 +93,17 @@ impl Joypad {
 
 impl HardwareBus for Joypad {
     fn read(&mut self, offset: usize) -> u8 {
-        match offset {
+        let value = match offset {
             0x16 => self.read_data_line_state(0),
             0x17 => 0x1C | self.read_data_line_state(1),
             _ => 0x00 // TODO: Open bus
-        }
+        };
+        debug!("NES joypad read: $40{:02X} => ${:02X}", offset, value);
+        value
     }
 
     fn write(&mut self, offset: usize, value: u8) {
+        debug!("NES joypad write: $40{:02X} <= ${:02X}", offset, value);
         match offset {
             0x16 => {
                 let old_latch = self.latch;
