@@ -1,9 +1,10 @@
 use hardware::MemoryAccess;
 use std::fmt::{Debug, Display, LowerHex, UpperHex};
 use std::ops::{BitAnd, BitOr, BitXor, Not};
+use super::decimal::BinaryCodedDecimal;
 use util::byte_access::ByteAccess;
 
-pub trait Value : MemoryAccess +
+pub trait Value : MemoryAccess + BinaryCodedDecimal +
     Copy + Clone + Default + Eq + PartialEq + Ord + PartialOrd +
     Display + Debug + UpperHex + LowerHex +
     BitAnd<Output=Self> + BitOr<Output=Self> + BitXor<Output=Self> + Not<Output=Self> +

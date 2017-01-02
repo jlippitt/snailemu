@@ -535,16 +535,27 @@ impl Cpu {
         let accumulator = Accumulator::<T>::default();
         let lhs = accumulator.get(self);
         let rhs = accessor.get(self);
+        let carry = T::from_bool(self.flags.carry);
 
-        if self.flags.decimal_mode {
-            panic!("Decimal mode not supported yet!");
+        let result = if self.flags.decimal_mode {
+            let lhs_decimal = lhs.to_decimal();
+            let rhs_decimal = rhs.to_decimal();
+            let decimal_result = lhs_decimal.add_value(rhs_decimal).add_value(carry);
+            self.flags.carry = !decimal_result.is_valid_decimal();
+            // TODO: Decimal mode overflow flag
+            let binary_result = decimal_result.to_binary();
+            debug!("Add (BIN): {:04X} + {:04X} = {:04X}", lhs, rhs, binary_result);
+            debug!("Add (DEC): {} + {} = {}", lhs_decimal, rhs_decimal, decimal_result);
+            binary_result
         } else {
-            let result = lhs.add_value(rhs).add_value(T::from_bool(self.flags.carry));
-            accumulator.set(self, result);
+            let result = lhs.add_value(rhs).add_value(carry);
             self.flags.carry = result < lhs;
             self.flags.overflow = (!(lhs ^ rhs) & (rhs ^ result)).is_negative();
-            self.set_zero_and_negative(result);
-        }
+            result
+        };
+
+        accumulator.set(self, result);
+        self.set_zero_and_negative(result);
     }
 
     fn and<T: Value, A: AddressMode<T>>(&mut self, parameter: A) {
@@ -924,16 +935,27 @@ impl Cpu {
         let accumulator = Accumulator::<T>::default();
         let lhs = accumulator.get(self);
         let rhs = accessor.get(self);
+        let carry = T::from_bool(!self.flags.carry);
 
-        if self.flags.decimal_mode {
-            panic!("Decimal mode not supported yet!");
+        let result = if self.flags.decimal_mode {
+            let lhs_decimal = lhs.to_decimal();
+            let rhs_decimal = rhs.to_decimal();
+            let decimal_result = lhs_decimal.subtract_value(rhs_decimal).subtract_value(carry);
+            self.flags.carry = decimal_result.is_valid_decimal();
+            // TODO: Decimal mode overflow flag
+            let binary_result = decimal_result.fix_underflow().to_binary();
+            debug!("Subtract (BIN): {:04X} - {:04X} = {:04X}", lhs, rhs, binary_result);
+            debug!("Subtract (DEC): {} - {} = {}", lhs_decimal, rhs_decimal, decimal_result);
+            binary_result
         } else {
-            let result = lhs.subtract_value(rhs).subtract_value(T::from_bool(!self.flags.carry));
-            accumulator.set(self, result);
+            let result = lhs.subtract_value(rhs).subtract_value(carry);
             self.flags.carry = result <= lhs;
             self.flags.overflow = ((lhs ^ rhs) & (lhs ^ result)).is_negative();
-            self.set_zero_and_negative(result);
-        }
+            result
+        };
+
+        accumulator.set(self, result);
+        self.set_zero_and_negative(result);
     }
 
     fn test_and_reset_bits<T: Value, A: AddressMode<T>>(&mut self, parameter: A)
