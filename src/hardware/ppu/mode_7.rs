@@ -16,14 +16,14 @@ pub struct Mode7 {
 #[inline]
 fn signed_scroll_value(raw_value: u16) -> isize {
     // Convert raw value into scroll value using 13-bit signed format
-    (((raw_value << 3) as i16) as isize) / 8
+    ((((raw_value & 0x1000) << 3) | (raw_value & 0x0FFF)) as i16) as isize
 }
 
 impl Mode7 {
     pub fn new() -> Mode7 {
         Mode7 {
-            scroll_x_raw: WriteTwice::new(0x0000, 0x01FFF),
-            scroll_y_raw: WriteTwice::new(0x0000, 0x01FFF),
+            scroll_x_raw: WriteTwice::new(0x0000, 0x1FFF),
+            scroll_y_raw: WriteTwice::new(0x0000, 0x1FFF),
             scroll_x: 0,
             scroll_y: 0
         }
@@ -32,11 +32,13 @@ impl Mode7 {
     pub fn set_scroll_x(&mut self, value: u8) {
         self.scroll_x_raw.write(value);
         self.scroll_x = signed_scroll_value(self.scroll_x_raw.value());
+        debug!("Mode 7 Scroll X: {:04X} => {}", self.scroll_x_raw.value(), self.scroll_x);
     }
 
     pub fn set_scroll_y(&mut self, value: u8) {
         self.scroll_y_raw.write(value);
         self.scroll_y = signed_scroll_value(self.scroll_y_raw.value());
+        debug!("Mode 7 Scroll Y: {:04X} => {}", self.scroll_y_raw.value(), self.scroll_y);
     }
 
     pub fn color_at(&self, ppu: &Ppu, screen_x: usize, screen_y: usize)
