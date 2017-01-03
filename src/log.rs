@@ -1,4 +1,4 @@
-static mut trace_mode: bool = false;
+static mut TRACE_MODE: bool = false;
 
 #[macro_export]
 macro_rules! info {
@@ -24,9 +24,9 @@ macro_rules! debug {
 }
 
 pub fn trace_mode_enabled() -> bool {
-    unsafe { trace_mode }
+    unsafe { TRACE_MODE }
 }
 
 pub fn enable_trace_mode() {
-    unsafe { trace_mode = true };
+    unsafe { TRACE_MODE = true };
 }
