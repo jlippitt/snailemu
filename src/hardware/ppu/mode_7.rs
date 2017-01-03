@@ -1,6 +1,7 @@
 use super::background_mode::Priority;
 use super::ppu::Ppu;
 use util::byte_access::WriteTwice;
+use std::mem;
 use util::color::Color;
 
 const CHR_SIZE: usize = 8;
@@ -16,7 +17,13 @@ pub struct Mode7 {
 #[inline]
 fn signed_scroll_value(raw_value: u16) -> isize {
     // Convert raw value into scroll value using 13-bit signed format
-    ((((raw_value & 0x1000) << 3) | (raw_value & 0x0FFF)) as i16) as isize
+    let sign_bit = raw_value & 0x1000 != 0;
+    let unsigned_value = raw_value & 0x0FFF;
+    if sign_bit {
+        ((0xF000 | unsigned_value) as i16) as isize
+    } else {
+        unsigned_value as isize
+    }
 }
 
 impl Mode7 {
@@ -32,13 +39,13 @@ impl Mode7 {
     pub fn set_scroll_x(&mut self, value: u8) {
         self.scroll_x_raw.write(value);
         self.scroll_x = signed_scroll_value(self.scroll_x_raw.value());
-        debug!("Mode 7 Scroll X: {:04X} => {}", self.scroll_x_raw.value(), self.scroll_x);
+        debug!("Mode 7 Scroll X: {:04X} => {:04X} ({})", self.scroll_x_raw.value(), self.scroll_x, self.scroll_x);
     }
 
     pub fn set_scroll_y(&mut self, value: u8) {
         self.scroll_y_raw.write(value);
         self.scroll_y = signed_scroll_value(self.scroll_y_raw.value());
-        debug!("Mode 7 Scroll Y: {:04X} => {}", self.scroll_y_raw.value(), self.scroll_y);
+        debug!("Mode 7 Scroll Y: {:04X} => {:04X} ({})", self.scroll_y_raw.value(), self.scroll_y, self.scroll_y);
     }
 
     pub fn color_at(&self, ppu: &Ppu, screen_x: usize, screen_y: usize)
