@@ -1031,7 +1031,7 @@ impl Display for CpuFlags {
             } else {
                 if self.index_size { "X" } else { "-" }
             },
-            if self.overflow { "D" } else { "-" },
+            if self.decimal_mode { "D" } else { "-" },
             if self.interrupt_disable { "I" } else { "-" },
             if self.zero { "Z" } else { "-" },
             if self.carry { "C" } else { "-" })
