@@ -168,12 +168,7 @@ pub fn dma_transfer(hardware: &mut Hardware, channel_mask: u8) {
                 (channel.source, destination)
             };
 
-            let value = hardware.read::<u8>(src);
-
-            debug!("DMA {} <= {} (${:02X})", dst, src, value);
-
-            hardware.write(dst, value);
-
+            hardware.transfer(src, dst);
             hardware.tick(DMA_CYCLES);
 
             count = count.wrapping_sub(1);

@@ -127,6 +127,13 @@ impl Hardware {
         T::write(self, address, value);
     }
 
+    // Used by DMA, etc. Does not cause any 'ticks' to occur.
+    pub fn transfer(&mut self, src: HardwareAddress, dst: HardwareAddress) {
+        let value = self.byte_at(src).read();
+        debug!("Transfer: {} <= {} (${:02X})", dst, src, value);
+        self.byte_at(dst).write(value);
+    }
+
     pub fn dma_transfer(&mut self, channel_mask: u8) {
         dma::dma_transfer(self, channel_mask)
     }
