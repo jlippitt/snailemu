@@ -84,13 +84,13 @@ impl BackgroundMode {
             let sub_screen_pixel = sub_screen_fn();
             let (sub_screen_color, _) = resolve_pixel(sub_screen_pixel, ppu);
             let clip = color_math.clip(ppu, color_math_enabled, screen_x);
-            let even_color = color_math.apply(sub_screen_color, self.prev_clip.get(), || main_screen_pixel);
-            let odd_color = color_math.apply(main_screen_color, clip, || sub_screen_pixel);
+            let even_color = color_math.apply(ppu, screen_x, sub_screen_color, self.prev_clip.get(), || main_screen_pixel);
+            let odd_color = color_math.apply(ppu, screen_x, main_screen_color, clip, || sub_screen_pixel);
             self.prev_clip.set(clip);
             (even_color, odd_color)
         } else {
             let clip = color_math.clip(ppu, color_math_enabled, screen_x);
-            let final_color = color_math.apply(main_screen_color, clip, sub_screen_fn);
+            let final_color = color_math.apply(ppu, screen_x, main_screen_color, clip, sub_screen_fn);
             (final_color, final_color)
         }
     }
