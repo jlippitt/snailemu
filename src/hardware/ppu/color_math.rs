@@ -91,7 +91,6 @@ impl ColorMath {
     }
 
     pub fn clip(&self, ppu: &Ppu, enabled: bool, screen_x: usize) -> bool {
-        // TODO: Window masking
         !enabled || self.apply_window_logic(self.prevent, ppu, screen_x)
     }
 
