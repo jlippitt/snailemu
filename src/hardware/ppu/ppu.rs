@@ -401,7 +401,7 @@ impl HardwareBus for Ppu {
             },
             0x32 => self.color_math.adjust_fixed_color(value),
             0x33 => {
-                // TODO: Mode 7 EXTBG
+                self.background_mode.set_mode_7_ext(value & 0x40 != 0);
                 // TODO: Pseudo-hi-res mode
                 self.screen.set_overscan(value & 0x04 != 0);
                 // TODO: Interlace settings

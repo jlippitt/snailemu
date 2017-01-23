@@ -48,7 +48,7 @@ impl Mode7 {
         debug!("Mode 7 Scroll Y: {:04X} => {:04X} ({})", self.scroll_y_raw.value(), self.scroll_y, self.scroll_y);
     }
 
-    pub fn color_at(&self, ppu: &Ppu, screen_x: usize, screen_y: usize)
+    pub fn color_at(&self, ppu: &Ppu, screen_x: usize, screen_y: usize, priority_enabled: bool)
         -> Option<(Color, Priority, bool)>
     {
         let signed_pos_x = (screen_x as isize) + self.scroll_x;
@@ -70,7 +70,11 @@ impl Mode7 {
         let color_index = character.pixel_at(pos_x % CHR_SIZE, pos_y % CHR_SIZE);
 
         if color_index != 0 {
-            Some((ppu.cgram().color(color_index as usize), 0, false))
+            if priority_enabled {
+                Some((ppu.cgram().color((color_index & 0x7F) as usize), 0, color_index & 0x80 != 0))
+            } else {
+                Some((ppu.cgram().color(color_index as usize), 0, false))
+            }
         } else {
             None
         }

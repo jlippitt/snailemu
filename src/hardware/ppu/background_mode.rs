@@ -4,8 +4,10 @@ use super::ppu::Ppu;
 use util::color::Color;
 
 pub struct BackgroundMode {
+    mode: u8,
     mode_fn: Box<ModeFn>,
     pseudo_hi_res: bool,
+    mode_7_ext: bool,
     prev_clip: Cell<bool>
 }
 
@@ -48,16 +50,18 @@ fn resolve_pixel(maybe_pixel: Option<Pixel>, ppu: &Ppu) -> Pixel {
 impl BackgroundMode {
     pub fn new() -> BackgroundMode {
         BackgroundMode {
+            mode: 0,
             mode_fn: Box::new(mode_0),
             pseudo_hi_res: false,
+            mode_7_ext: false,
             prev_clip: Cell::new(false)
         }
     }
 
     pub fn set_mode(&mut self, value: u8) {
-        let mode = value & 0x07;
+        self.mode = value & 0x07;
 
-        self.mode_fn = Box::new(match mode {
+        self.mode_fn = Box::new(match self.mode {
             0 => mode_0,
             1 => if value & 0x08 != 0 { mode_1_high_priority } else { mode_1_low_priority },
             2 => mode_2,
@@ -65,11 +69,23 @@ impl BackgroundMode {
             4 => mode_4,
             5 => mode_5,
             6 => mode_6,
-            7 => mode_7,
-            _ => panic!("Mode {} not yet supported", mode)
+            7 => if self.mode_7_ext { mode_7_ext } else { mode_7 },
+            _ => panic!("Mode {} not yet supported", self.mode)
         });
 
-        self.pseudo_hi_res = mode == 5 || mode == 6;
+        self.pseudo_hi_res = self.mode == 5 || self.mode == 6;
+    }
+
+    pub fn set_mode_7_ext(&mut self, value: bool) {
+        self.mode_7_ext = value;
+
+        if self.mode == 7 {
+            if self.mode_7_ext {
+                self.mode_fn = Box::new(mode_7_ext);
+            } else {
+                self.mode_fn = Box::new(mode_7);
+            }
+        }
     }
 
     pub fn color_at(&self, ppu: &Ppu, screen_x: usize, screen_y: usize) -> (Color, Color) {
@@ -286,13 +302,26 @@ fn mode_6(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer
 }
 
 fn mode_7(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer) -> Option<Pixel> {
-    // TODO: Mode 7 EXTBG
     let object_pixel = ppu.object_layer().color_at(ppu, screen_x, screen_y, screen_layer);
     try_pixel!(object_pixel, 3);
     try_pixel!(object_pixel, 2);
     try_pixel!(object_pixel, 1);
-    let bg1_pixel = ppu.mode_7().color_at(ppu, screen_x, screen_y);
+    let bg1_pixel = ppu.mode_7().color_at(ppu, screen_x, screen_y, false);
     try_pixel!(bg1_pixel);
     try_pixel!(object_pixel);
+    None
+}
+
+fn mode_7_ext(ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer) -> Option<Pixel> {
+    let object_pixel = ppu.object_layer().color_at(ppu, screen_x, screen_y, screen_layer);
+    try_pixel!(object_pixel, 3);
+    try_pixel!(object_pixel, 2);
+    let bg2_pixel = ppu.mode_7().color_at(ppu, screen_x, screen_y, true);
+    try_pixel!(bg2_pixel, 1);
+    try_pixel!(object_pixel, 1);
+    let bg1_pixel = ppu.mode_7().color_at(ppu, screen_x, screen_y, false);
+    try_pixel!(bg1_pixel);
+    try_pixel!(object_pixel);
+    try_pixel!(bg2_pixel);
     None
 }
