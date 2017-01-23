@@ -7,5 +7,6 @@ mod oam;
 mod object_layer;
 mod ppu;
 mod vram;
+mod window;
 
 pub use self::ppu::Ppu;

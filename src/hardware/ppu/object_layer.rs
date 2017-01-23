@@ -1,6 +1,7 @@
 use super::background_mode::{Priority, ScreenLayer};
 use super::oam::SizeSelector;
 use super::ppu::Ppu;
+use super::window::WindowMask;
 use util::color::Color;
 
 const TABLE_SIZE: usize = 256;
@@ -13,7 +14,8 @@ pub struct ObjectLayer {
     color_math_enabled: bool,
     small_size: ObjectSize,
     large_size: ObjectSize,
-    table_offsets: [usize; 2]
+    table_offsets: [usize; 2],
+    window_mask: WindowMask
 }
 
 #[derive(Copy, Clone)]
@@ -30,7 +32,8 @@ impl ObjectLayer {
             color_math_enabled: false,
             small_size: ObjectSize::new(8, 8),
             large_size: ObjectSize::new(16, 16),
-            table_offsets: [0, TABLE_SIZE]
+            table_offsets: [0, TABLE_SIZE],
+            window_mask: WindowMask::new()
         }
     }
 
@@ -66,6 +69,14 @@ impl ObjectLayer {
         self.large_size = large_size;
     }
 
+    pub fn set_window_mask_options(&mut self, value: u8) {
+        self.window_mask.set_options(value);
+    }
+
+    pub fn set_window_mask_logic(&mut self, value: u8) {
+        self.window_mask.set_operator(value);
+    }
+
     pub fn color_at(&self, ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer)
         -> Option<(Color, Priority, bool)>
     {
@@ -74,7 +85,7 @@ impl ObjectLayer {
             ScreenLayer::SubScreen => self.sub_screen_enabled
         };
 
-        if !enabled {
+        if !enabled || !self.window_mask.contains(ppu, screen_x) {
             return None;
         }
 

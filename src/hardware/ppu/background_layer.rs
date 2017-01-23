@@ -1,6 +1,7 @@
 use super::background_mode::{Priority, ScreenLayer};
 use super::ppu::Ppu;
 use super::vram::TILE_MAP_COUNT;
+use super::window::WindowMask;
 use util::byte_access::WriteTwice;
 use util::color::Color;
 
@@ -15,7 +16,8 @@ pub struct BackgroundLayer {
     chr_16_offset: usize,
     chr_256_offset: usize,
     scroll_x: WriteTwice<u16>,
-    scroll_y: WriteTwice<u16>
+    scroll_y: WriteTwice<u16>,
+    window_mask: WindowMask
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -42,7 +44,8 @@ impl BackgroundLayer {
             chr_16_offset: 0,
             chr_256_offset: 0,
             scroll_x: WriteTwice::new(0x0000, 0x03FF),
-            scroll_y: WriteTwice::new(0x0000, 0x03FF)
+            scroll_y: WriteTwice::new(0x0000, 0x03FF),
+            window_mask: WindowMask::new()
         }
     }
 
@@ -105,6 +108,14 @@ impl BackgroundLayer {
         self.scroll_y.write(value);
     }
 
+    pub fn set_window_mask_options(&mut self, value: u8) {
+        self.window_mask.set_options(value);
+    }
+
+    pub fn set_window_mask_logic(&mut self, value: u8) {
+        self.window_mask.set_operator(value);
+    }
+
     pub fn color_at(&self, ppu: &Ppu, screen_x: usize, screen_y: usize, screen_layer: ScreenLayer, pixel_options: &PixelOptions)
         -> Option<(Color, Priority, bool)>
     {
@@ -113,7 +124,7 @@ impl BackgroundLayer {
             ScreenLayer::SubScreen => self.sub_screen_enabled
         };
 
-        if !enabled {
+        if !enabled || !self.window_mask.contains(ppu, screen_x) {
             return None;
         }
 

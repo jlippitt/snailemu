@@ -10,6 +10,7 @@ use super::mode_7::Mode7;
 use super::oam::Oam;
 use super::object_layer::ObjectLayer;
 use super::vram::Vram;
+use super::window::Window;
 use util::byte_access::{ReadTwice, WriteTwice};
 use util::color::Color;
 
@@ -50,6 +51,8 @@ pub struct Ppu {
     bg4: BackgroundLayer,
     mode_7: Mode7,
     object_layer: ObjectLayer,
+    window1: Window,
+    window2: Window,
     color_math: ColorMath,
     backdrop_color_math_enabled: bool,
     multiplication: Multiplication,
@@ -100,6 +103,8 @@ impl Ppu {
             bg4: BackgroundLayer::new(),
             mode_7: Mode7::new(),
             object_layer: ObjectLayer::new(),
+            window1: Window::new(),
+            window2: Window::new(),
             color_math: ColorMath::new(),
             backdrop_color_math_enabled: false,
             multiplication: Multiplication {
@@ -159,6 +164,14 @@ impl Ppu {
 
     pub fn object_layer(&self) -> &ObjectLayer {
         &self.object_layer
+    }
+
+    pub fn window1(&self) -> &Window {
+        &self.window1
+    }
+
+    pub fn window2(&self) -> &Window {
+        &self.window2
     }
 
     pub fn color_math(&self) -> &ColorMath {
@@ -336,6 +349,32 @@ impl HardwareBus for Ppu {
             },
             0x21 => self.cgram.set_address(value),
             0x22 => self.cgram.write(value),
+            0x23 => {
+                self.bg1.set_window_mask_options(value & 0x0F);
+                self.bg2.set_window_mask_options((value & 0xF0) >> 4);
+            },
+            0x24 => {
+                self.bg3.set_window_mask_options(value & 0x0F);
+                self.bg4.set_window_mask_options((value & 0xF0) >> 4);
+            },
+            0x25 => {
+                self.object_layer.set_window_mask_options(value & 0x0F);
+                self.color_math.set_window_mask_options((value & 0xF0) >> 4);
+            },
+            0x26 => self.window1.set_left(value),
+            0x27 => self.window1.set_right(value),
+            0x28 => self.window2.set_left(value),
+            0x29 => self.window2.set_right(value),
+            0x2A => {
+                self.bg1.set_window_mask_logic(value & 0x03);
+                self.bg2.set_window_mask_logic((value & 0x0C) >> 2);
+                self.bg3.set_window_mask_logic((value & 0x30) >> 4);
+                self.bg4.set_window_mask_logic((value & 0xC0) >> 6);
+            },
+            0x2B => {
+                self.object_layer.set_window_mask_logic(value & 0x03);
+                self.color_math.set_window_mask_logic((value & 0x0C) >> 2);
+            },
             0x2C => {
                 self.bg1.set_main_screen_enabled(value & 0x01 != 0);
                 self.bg2.set_main_screen_enabled(value & 0x02 != 0);

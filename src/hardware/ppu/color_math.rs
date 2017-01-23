@@ -1,10 +1,13 @@
+use super::ppu::Ppu;
+use super::window::WindowMask;
 use util::color::Color;
 
 pub struct ColorMath {
     source: ColorMathSource,
     operation: ColorMathOperator,
     divisor: u8,
-    fixed_color: Color
+    fixed_color: Color,
+    window_mask: WindowMask
 }
 
 enum ColorMathSource {
@@ -24,7 +27,8 @@ impl ColorMath {
             source: ColorMathSource::FixedColor,
             operation: ColorMathOperator::Add,
             divisor: 1,
-            fixed_color: Color::default()
+            fixed_color: Color::default(),
+            window_mask: WindowMask::new()
         }
     }
 
@@ -62,8 +66,16 @@ impl ColorMath {
         }
     }
 
-    pub fn clip(&self, enabled: bool, screen_x: usize, screen_y: usize) -> bool {
-        // TODO: Window clipping
+    pub fn set_window_mask_options(&mut self, value: u8) {
+        self.window_mask.set_options(value);
+    }
+
+    pub fn set_window_mask_logic(&mut self, value: u8) {
+        self.window_mask.set_operator(value);
+    }
+
+    pub fn clip(&self, ppu: &Ppu, enabled: bool, screen_x: usize) -> bool {
+        // TODO: Window masking
         !enabled
     }
 
