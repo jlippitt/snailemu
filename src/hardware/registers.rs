@@ -119,6 +119,7 @@ impl HardwareRegs {
                 if self.joypad.auto_read_enabled {
                     self.joypad.auto_read_active = JOYPAD_AUTO_READ_LINES;
                     self.joypad.button_state = joypad.read_button_state();
+                    debug!("Joypad auto read: {:04X}", self.joypad.button_state[0]);
                 }
             }
         }
