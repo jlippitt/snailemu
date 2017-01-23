@@ -85,7 +85,7 @@ impl ObjectLayer {
             ScreenLayer::SubScreen => self.sub_screen_enabled
         };
 
-        if !enabled || !self.window_mask.contains(ppu, screen_x) {
+        if !enabled || self.window_mask.contains(ppu, screen_x) {
             return None;
         }
 

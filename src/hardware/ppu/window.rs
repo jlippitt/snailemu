@@ -38,10 +38,12 @@ impl Window {
     }
 
     pub fn set_left(&mut self, value: u8) {
+        debug!("Window Left: {:02X}", value);
         self.left = value as usize;
     }
 
     pub fn set_right(&mut self, value: u8) {
+        debug!("Window Right: {:02X}", value);
         self.right = value as usize;
     }
 
@@ -80,7 +82,7 @@ impl WindowMask {
 
     pub fn contains(&self, ppu: &Ppu, x: usize) -> bool {
         match (self.w1_enabled, self.w2_enabled) {
-            (false, false) => true,
+            (false, false) => false,
             (true, false) => invert(ppu.window1().contains(x), self.w1_inverted),
             (false, true) => invert(ppu.window2().contains(x), self.w2_inverted),
             (true, true) => {
