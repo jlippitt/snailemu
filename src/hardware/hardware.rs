@@ -141,8 +141,25 @@ impl Hardware {
     pub fn tick(&mut self, cycles: u64) {
         self.ppu.add_cycles(cycles);
 
-        while self.ppu.next_pixel() {
+        loop {
+            let result = self.ppu.next_pixel();
+
+            if result == NextPixelResult::NoChange {
+                break
+            }
+
             self.regs.update(&mut self.ppu, &self.joypad);
+
+            if result == NextPixelResult::VIncrement {
+                let line = self.ppu.position.v();
+
+                if line == 0 {
+                    let channels_enabled = self.regs.hdma_enabled();
+                    dma::hdma_reset(&mut self, channels_enabled);
+                }
+
+                dma::hdma_tick(&mut self);
+            }
         }
 
         self.clock = self.clock.wrapping_add(cycles);

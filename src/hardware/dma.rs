@@ -134,6 +134,45 @@ impl HardwareBus for DmaChannel {
     }
 }
 
+impl TransferMode {
+    fn iter(&self) -> TransferModeIterator {
+        TransferModeIterator {
+            transfer_mode: *self,
+            phase: 0
+        }
+    }
+
+    fn len(&self) -> u16 {
+        match *self {
+            TransferMode::A => 1,
+            TransferMode::AB => 2,
+            TransferMode::AA => 2,
+            TransferMode::AABB => 4,
+            TransferMode::ABCD => 4,
+            TransferMode::ABAB => 4
+        }
+    }
+}
+
+impl Iterator for TransferModeIterator {
+    type Item = u16;
+
+    fn next(&mut self) -> Option<u16> {
+        let offset = match self.transfer_mode {
+            TransferMode::A => self.phase,
+            TransferMode::AB => self.phase, 
+            TransferMode::AA => self.phase / 2,
+            TransferMode::AABB => self.phase / 2,
+            TransferMode::ABCD => self.phase,
+            TransferMode::ABAB => self.phase % 2
+        };
+
+        self.phase = (self.phase + 1) % self.transfer_mode.len();
+
+        Some(offset)
+    }
+}
+
 pub fn dma_transfer(hardware: &mut Hardware, channel_mask: u8) {
     hardware.tick(DMA_CYCLES);
 
@@ -198,41 +237,21 @@ pub fn dma_transfer(hardware: &mut Hardware, channel_mask: u8) {
     }
 }
 
-impl TransferMode {
-    fn iter(&self) -> TransferModeIterator {
-        TransferModeIterator {
-            transfer_mode: *self,
-            phase: 0
-        }
-    }
+pub fn hdma_reset(hardware: &mut Hardware, channels_enabled: u8) {
+    for i in 0..DMA_CHANNEL_COUNT {
+        let active = channels_enabled & (0x01 << i) != 0;
+        hardware.dma_channel_mut(i).hdma_active = active;
 
-    fn len(&self) -> u16 {
-        match *self {
-            TransferMode::A => 1,
-            TransferMode::AB => 2,
-            TransferMode::AA => 2,
-            TransferMode::AABB => 4,
-            TransferMode::ABCD => 4,
-            TransferMode::ABAB => 4
-        }
+        // TODO: Reset registers
     }
 }
 
-impl Iterator for TransferModeIterator {
-    type Item = u16;
-
-    fn next(&mut self) -> Option<u16> {
-        let offset = match self.transfer_mode {
-            TransferMode::A => self.phase,
-            TransferMode::AB => self.phase, 
-            TransferMode::AA => self.phase / 2,
-            TransferMode::AABB => self.phase / 2,
-            TransferMode::ABCD => self.phase,
-            TransferMode::ABAB => self.phase % 2
-        };
-
-        self.phase = (self.phase + 1) % self.transfer_mode.len();
-
-        Some(offset)
+pub fn hdma_tick(hardware: &mut Hardware) {
+    for i in 0..DMA_CHANNEL_COUNT {
+        if !hardware.dma_channel(i).hdma_active {
+            continue
+        }
+        
+        // TODO: Stuff
     }
 }

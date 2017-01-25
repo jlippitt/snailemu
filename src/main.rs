@@ -12,7 +12,7 @@ mod hardware;
 mod util;
 
 use cpu::Cpu;
-use hardware::{Apu, Hardware, IoPort, Joypad, Ppu, Rom, Screen, Wram};
+use hardware::{Apu, Hardware, Hdma, IoPort, Joypad, Ppu, Rom, Screen, Wram};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::env;

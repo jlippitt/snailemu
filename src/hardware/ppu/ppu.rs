@@ -65,6 +65,13 @@ pub struct Position {
     v: usize
 }
 
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub enum NextPixelResult {
+    NoChange,
+    HIncrement,
+    VIncrement
+}
+
 struct StoredPosition {
     h: ReadTwice<u16>,
     v: ReadTwice<u16>,
@@ -186,9 +193,9 @@ impl Ppu {
         self.cycles += cycles;
     }
 
-    pub fn next_pixel(&mut self) -> bool {
+    pub fn next_pixel(&mut self) -> NextPixelResult {
         if self.cycles < self.next_pixel_cycles {
-            return false;
+            return NextPixelResult::NoChange;
         }
 
         self.cycles -= self.next_pixel_cycles;
@@ -216,7 +223,7 @@ impl Ppu {
 
         self.position.h += 1;
 
-        if self.position.h == DOTS_PER_LINE {
+        let result = if self.position.h == DOTS_PER_LINE {
             self.position.h = 0;
             self.position.v += 1;
 
@@ -231,7 +238,12 @@ impl Ppu {
                 self.position.v = 0;
                 self.vblank = false;
             }
-        }
+
+            NextPixelResult::VIncrement
+
+        } else {
+            NextPixelResult::HIncrement
+        };
 
         self.hblank = self.position.h >= HBLANK_START || self.position.h < HBLANK_END;
 
@@ -240,7 +252,7 @@ impl Ppu {
             _ => STANDARD_PIXEL_CYCLES
         };
 
-        true
+        result
     }
 
     pub fn vblank(&self) -> bool {
